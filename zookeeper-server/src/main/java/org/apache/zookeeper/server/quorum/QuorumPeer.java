@@ -1075,6 +1075,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         if (!getView().containsKey(myid)) {
             throw new RuntimeException("My id " + myid + " not in the peer list");
         }
+        // 加载快照以及事务日志
         loadDataBase();
         startServerCnxnFactory();
         try {
@@ -1084,7 +1085,9 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             System.out.println(e);
         }
         startLeaderElection();
+        // jvm检测线程
         startJvmPauseMonitor();
+        // 关键
         super.start();
     }
 
@@ -1092,6 +1095,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         try {
             zkDb.loadDataBase();
 
+            // 检查epoch是否合法
             // load the epochs
             long lastProcessedZxid = zkDb.getDataTree().lastProcessedZxid;
             long epochOfZxid = ZxidUtils.getEpochFromZxid(lastProcessedZxid);
