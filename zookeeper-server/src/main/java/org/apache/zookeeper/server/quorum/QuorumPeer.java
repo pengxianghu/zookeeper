@@ -1077,6 +1077,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         }
         // 加载快照以及事务日志
         loadDataBase();
+        // 开启数据读取线程
         startServerCnxnFactory();
         try {
             adminServer.start();
@@ -1084,6 +1085,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             LOG.warn("Problem starting AdminServer", e);
             System.out.println(e);
         }
+        // 领导者选举初始化工作，包括选举传输层和应用层
         startLeaderElection();
         // jvm检测线程
         startJvmPauseMonitor();
@@ -1282,6 +1284,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         case 2:
             throw new UnsupportedOperationException("Election Algorithm 2 is not supported.");
         case 3:
+            // 传输层
             QuorumCnxManager qcm = createCnxnManager();
             QuorumCnxManager oldQcm = qcmRef.getAndSet(qcm);
             if (oldQcm != null) {
@@ -1290,6 +1293,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
             }
             QuorumCnxManager.Listener listener = qcm.listener;
             if (listener != null) {
+                // 监听处于阻塞状态，等待其他server连接
                 listener.start();
                 FastLeaderElection fle = new FastLeaderElection(this, qcm);
                 fle.start();
@@ -1336,7 +1340,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
     boolean shuttingDownLE = false;
 
     @Override
-    public void run() {
+    public void run() {             // ---key---
         updateThreadName();
 
         LOG.debug("Starting quorum peer");
@@ -1429,6 +1433,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                                 shuttingDownLE = false;
                                 startLeaderElection();
                             }
+                            // lookForLeader()返回当前集群的leader
                             setCurrentVote(makeLEStrategy().lookForLeader());
                         } catch (Exception e) {
                             LOG.warn("Unexpected exception", e);

@@ -156,14 +156,14 @@ public class QuorumCnxManager {
     /*
      * Mapping from Peer to Thread number
      */
-    final ConcurrentHashMap<Long, SendWorker> senderWorkerMap;
-    final ConcurrentHashMap<Long, BlockingQueue<ByteBuffer>> queueSendMap;
-    final ConcurrentHashMap<Long, ByteBuffer> lastMessageSent;
+    final ConcurrentHashMap<Long, SendWorker> senderWorkerMap;              // 发送选票的线程，与下面的BlockingQueue对应，一个SendWorker一个Queue
+    final ConcurrentHashMap<Long, BlockingQueue<ByteBuffer>> queueSendMap;  // 发送给每台服务器的选票，key是myid，list是选票
+    final ConcurrentHashMap<Long, ByteBuffer> lastMessageSent;              // 发送给每台服务器最近的消息
 
     /*
      * Reception queue
      */
-    public final BlockingQueue<Message> recvQueue;
+    public final BlockingQueue<Message> recvQueue;                          // 当前zk server接收到的所有选票
 
     /*
      * Shutdown flag
@@ -334,6 +334,7 @@ public class QuorumCnxManager {
         initializeConnectionExecutor(mySid, quorumCnxnThreadsSize);
 
         // Starts listener thread that waits for connection requests
+        // 传输层监听器
         listener = new Listener();
         listener.setName("QuorumPeerListener");
     }
