@@ -1296,6 +1296,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
                 // 监听处于阻塞状态，等待其他server连接
                 listener.start();
                 FastLeaderElection fle = new FastLeaderElection(this, qcm);
+                // 启动WorkerSender和WorkerReceiver线程
                 fle.start();
                 le = fle;
             } else {
@@ -1377,6 +1378,7 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
              * Main loop
              */
             while (running) {
+                // 当前server的状态
                 switch (getPeerState()) {
                 case LOOKING:
                     LOG.info("LOOKING");

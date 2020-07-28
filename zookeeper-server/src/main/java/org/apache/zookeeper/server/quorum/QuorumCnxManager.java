@@ -691,6 +691,7 @@ public class QuorumCnxManager {
          * If sending message to myself, then simply enqueue it (loopback).
          */
         if (this.mySid == sid) {
+            // 如果目标是自己
             b.position(0);
             addToRecvQueue(new Message(b.duplicate(), sid));
             /*
@@ -701,6 +702,7 @@ public class QuorumCnxManager {
              * Start a new connection if doesn't have one already.
              */
             BlockingQueue<ByteBuffer> bq = queueSendMap.computeIfAbsent(sid, serverId -> new CircularBlockingQueue<>(SEND_CAPACITY));
+            // 把b加入bq，senderWorker线程会读取数据并发送
             addToSendQueue(bq, b);
             connectOne(sid);
         }

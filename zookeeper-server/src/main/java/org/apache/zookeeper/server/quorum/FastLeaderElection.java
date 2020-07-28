@@ -227,12 +227,15 @@ public class FastLeaderElection implements Election {
                 this.manager = manager;
             }
 
+            // 从传输层recvQueue获取数据，并放入应用层recvqueue
+            // 判断一些情况，例如当前server已统计得到leader信息，将认为的leader信息放入sendqueue
             public void run() {
 
                 Message response;
                 while (!stop) {
                     // Sleeps on receive
                     try {
+                        // 从传输层recvQueue获取数据，最终将数据放入recvqueue
                         response = manager.pollRecvQueue(3000, TimeUnit.MILLISECONDS);
                         if (response == null) {
                             continue;
@@ -350,7 +353,7 @@ public class FastLeaderElection implements Election {
                                 response.sid,
                                 current.getPeerEpoch(),
                                 qv.toString().getBytes());
-
+                            // 如果已有leader不需要选举，直接通知leader信息，放入sendqueue
                             sendqueue.offer(notmsg);
                         } else {
                             // Receive new message
@@ -383,6 +386,7 @@ public class FastLeaderElection implements Election {
                             n.peerEpoch = rpeerepoch;
                             n.version = version;
                             n.qv = rqv;
+                            // 构造notification
                             /*
                              * Print notification info
                              */
@@ -413,6 +417,7 @@ public class FastLeaderElection implements Election {
                                  */
                                 if ((ackstate == QuorumPeer.ServerState.LOOKING)
                                     && (n.electionEpoch < logicalclock.get())) {
+                                    // 逻辑时钟有误
                                     Vote v = getVote();
                                     QuorumVerifier qv = self.getQuorumVerifier();
                                     ToSend notmsg = new ToSend(
@@ -431,6 +436,7 @@ public class FastLeaderElection implements Election {
                                  * If this server is not looking, but the one that sent the ack
                                  * is looking, then send back what it believes to be the leader.
                                  */
+                                // 当前server已不是looking状态，往sendqueue放入准leader信息
                                 Vote current = self.getCurrentVote();
                                 if (ackstate == QuorumPeer.ServerState.LOOKING) {
                                     if (self.leader != null) {
@@ -440,7 +446,6 @@ public class FastLeaderElection implements Election {
                                         }
                                         self.leader.reportLookingSid(response.sid);
                                     }
-
 
                                     LOG.debug(
                                         "Sending new notification. My id ={} recipient={} zxid=0x{} leader={} config version = {}",
@@ -489,6 +494,7 @@ public class FastLeaderElection implements Election {
                 this.manager = manager;
             }
 
+            // 从sendqueue获取数据，放入传输层SenderQueue
             public void run() {
                 while (!stop) {
                     try {

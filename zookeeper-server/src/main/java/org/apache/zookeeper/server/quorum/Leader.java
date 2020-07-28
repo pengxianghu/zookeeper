@@ -595,6 +595,7 @@ public class Leader extends LearnerMaster {
 
             // Start thread that waits for connection requests from
             // new followers.
+            // 数据同步连接
             cnxAcceptor = new LearnerCnxAcceptor();
             cnxAcceptor.start();
 
